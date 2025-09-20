@@ -8,6 +8,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- jsPDF for PDF generation -->
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -73,6 +75,11 @@
             -moz-appearance: none;
             appearance: none;
         }
+        select option {
+            background-color: #374151;
+            color: #e5e7eb;
+            padding: 8px;
+        }
         /* Custom scrollbar for dark theme */
         ::-webkit-scrollbar {
             width: 8px;
@@ -117,6 +124,7 @@
                     </div>
                 </div>
             </div>
+            <!-- PDF download button removed as requested -->
         </header>
 
         <!-- Navigation Tabs -->
@@ -130,10 +138,18 @@
         <!-- Dashboard Section -->
         <div id="dashboard-section" class="content-section active">
             <!-- Summary Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
                 <div class="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-6 text-white shadow-lg">
                     <h2 class="text-lg font-medium opacity-90 mb-1">Current Balance</h2>
                     <p class="text-3xl font-bold" id="balance">₹0.00</p>
+                </div>
+                <div class="bg-gradient-to-r from-purple-600 to-violet-600 rounded-2xl p-6 text-white shadow-lg">
+                    <h2 class="text-lg font-medium opacity-90 mb-1">Cash in Hand</h2>
+                    <p class="text-3xl font-bold" id="cash-in-hand">₹0.00</p>
+                </div>
+                <div class="bg-gradient-to-r from-cyan-600 to-blue-600 rounded-2xl p-6 text-white shadow-lg">
+                    <h2 class="text-lg font-medium opacity-90 mb-1">Online Balance</h2>
+                    <p class="text-3xl font-bold" id="online-balance">₹0.00</p>
                 </div>
                 <div class="bg-gradient-to-r from-green-600 to-emerald-600 rounded-2xl p-6 text-white shadow-lg">
                     <h2 class="text-lg font-medium opacity-90 mb-1">Total Income</h2>
@@ -142,6 +158,31 @@
                 <div class="bg-gradient-to-r from-red-600 to-rose-600 rounded-2xl p-6 text-white shadow-lg">
                     <h2 class="text-lg font-medium opacity-90 mb-1">Total Expenses</h2>
                     <p class="text-3xl font-bold" id="expense">₹0.00</p>
+                </div>
+            </div>
+
+
+
+            <!-- Custom Date Analysis -->
+            <div class="card shadow-lg p-6 mb-8">
+                <h2 class="text-xl font-semibold text-gray-100 mb-4">Custom Date Analysis</h2>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                    <div>
+                        <label for="analysis-date" class="block text-sm font-medium text-gray-300 mb-2">Select Date</label>
+                        <input type="date" id="analysis-date" class="form-input w-full px-4 py-2">
+                    </div>
+                    <div class="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl p-4 text-white">
+                        <h3 class="text-sm font-medium opacity-90 mb-1" id="selected-day-label">Selected Day</h3>
+                        <p class="text-xl font-bold" id="selected-day-amount">₹0.00</p>
+                    </div>
+                    <div class="bg-gradient-to-r from-blue-600 to-cyan-600 rounded-xl p-4 text-white">
+                        <h3 class="text-sm font-medium opacity-90 mb-1" id="selected-month-label">Selected Month</h3>
+                        <p class="text-xl font-bold" id="selected-month-amount">₹0.00</p>
+                    </div>
+                    <div class="bg-gradient-to-r from-green-600 to-emerald-600 rounded-xl p-4 text-white">
+                        <h3 class="text-sm font-medium opacity-90 mb-1" id="selected-year-label">Selected Year</h3>
+                        <p class="text-xl font-bold" id="selected-year-amount">₹0.00</p>
+                    </div>
                 </div>
             </div>
 
@@ -181,6 +222,14 @@
                             <div>
                                 <label for="date" class="block text-sm font-medium text-gray-300 mb-1">Date</label>
                                 <input type="date" id="date" required class="form-input w-full px-4 py-2">
+                            </div>
+                            
+                            <div>
+                                <label for="payment-method" class="block text-sm font-medium text-gray-300 mb-1">Payment Method</label>
+                                <select id="payment-method" required class="form-input w-full px-4 py-2">
+                                    <option value="online">Online</option>
+                                    <option value="cash">Cash</option>
+                                </select>
                             </div>
                             
                             <div>
@@ -372,6 +421,63 @@
         </div>
     </div>
 
+    <!-- Partial Payment Modal -->
+    <div id="partial-payment-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 hidden">
+        <div class="bg-gray-800 rounded-2xl p-6 max-w-md w-full mx-4 border border-gray-700 modal-enter">
+            <h3 class="text-xl font-semibold text-gray-100 mb-4">Record Partial Payment</h3>
+            <div class="mb-4">
+                <p class="text-gray-300 mb-2">Person: <span id="payment-person-name" class="font-medium text-white"></span></p>
+                <p class="text-gray-300 mb-4">Total Owed: <span id="payment-total-owed" class="font-medium text-green-400"></span></p>
+            </div>
+            <div class="mb-4">
+                <label for="payment-amount" class="block text-sm font-medium text-gray-300 mb-2">Payment Amount (₹)</label>
+                <input type="number" id="payment-amount" min="0" step="0.01" class="form-input w-full px-4 py-2" placeholder="0.00">
+                <p class="text-xs text-gray-400 mt-1">Enter the amount they're paying now</p>
+            </div>
+            <div class="mb-6">
+                <label for="repayment-method" class="block text-sm font-medium text-gray-300 mb-2">Payment Method</label>
+                <select id="repayment-method" class="form-input w-full px-4 py-2">
+                    <option value="online">Online</option>
+                    <option value="cash">Cash</option>
+                </select>
+            </div>
+            <div class="flex justify-end space-x-3">
+                <button id="cancel-payment" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-xl transition-all">
+                    Cancel
+                </button>
+                <button id="confirm-payment" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl transition-all">
+                    Record Payment
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Method Modal -->
+    <div id="payment-method-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 hidden">
+        <div class="bg-gray-800 rounded-2xl p-6 max-w-md w-full mx-4 border border-gray-700 modal-enter">
+            <h3 class="text-xl font-semibold text-gray-100 mb-4">Select Payment Method</h3>
+            <div class="mb-4">
+                <p class="text-gray-300 mb-2">Person: <span id="method-person-name" class="font-medium text-white"></span></p>
+                <p class="text-gray-300 mb-4">Amount: <span id="method-amount" class="font-medium text-green-400"></span></p>
+            </div>
+            <div class="mb-6">
+                <label for="settlement-method" class="block text-sm font-medium text-gray-300 mb-2">How did they pay?</label>
+                <select id="settlement-method" class="form-input w-full px-4 py-2">
+                    <option value="online">Online</option>
+                    <option value="cash">Cash</option>
+                </select>
+            </div>
+            <div class="flex justify-end space-x-3">
+                <button id="cancel-method" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-xl transition-all">
+                    Cancel
+                </button>
+                <button id="confirm-method" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl transition-all">
+                    Record Payment
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // DOM Elements
@@ -386,6 +492,7 @@
             const analyticsSection = document.getElementById('analytics-section');
             
             const viewAllTransactions = document.getElementById('view-all-transactions');
+            const downloadPdfBtn = document.getElementById('download-pdf');
             
             // Initialize variables
             let transactions = [];
@@ -404,9 +511,12 @@
             
             // Set today's date as default
             document.getElementById('date').valueAsDate = new Date();
+            document.getElementById('analysis-date').valueAsDate = new Date();
             
             // Initialize the app
+            initializeDateSelectors();
             updateSummary();
+            updateCustomDateAnalysis();
             renderRecentTransactions();
             renderTransactions();
             renderSplitExpenses();
@@ -434,6 +544,11 @@
                 e.preventDefault();
                 setActiveTab(transactionsTab, transactionsSection);
             });
+
+            // Download PDF click
+            if (downloadPdfBtn) {
+                downloadPdfBtn.addEventListener('click', () => generatePDFReport());
+            }
             
             function setActiveTab(tab, section) {
                 // Remove active class from all tabs and sections
@@ -444,6 +559,188 @@
                 tab.classList.add('active');
                 section.classList.add('active');
             }
+
+            // PDF Report Generator
+            function generatePDFReport() {
+                // Ensure jsPDF is available; if not, load it and retry
+                if (!window.jspdf || !window.jspdf.jsPDF) {
+                    const existing = document.querySelector('script[data-jspdf]');
+                    if (!existing) {
+                        const s = document.createElement('script');
+                        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+                        s.setAttribute('data-jspdf', 'true');
+                        s.onload = () => setTimeout(generatePDFReport, 0);
+                        s.onerror = () => alert('PDF library failed to load. Please check your connection and try again.');
+                        document.body.appendChild(s);
+                    } else {
+                        // Library is loading; try again shortly
+                        setTimeout(generatePDFReport, 300);
+                    }
+                    return;
+                }
+
+                const JsPDF = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+                const doc = new JsPDF({ unit: 'pt', format: 'a4' });
+
+                const margin = 36; // 0.5in
+                let y = margin;
+
+                // Title
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(18);
+                doc.text('Expense Tracker Summary', margin, y);
+
+                // Date
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(10);
+                const dateStr = new Date().toLocaleDateString();
+                doc.text(dateStr, 560 - margin, y, { align: 'right' });
+
+                y += 24;
+
+                // Summary Cards
+                const totals = getTotals();
+                const cardW = (560 - margin * 2) / 3; // total width 560pt (A4 portrait minus default margins)
+                const cardH = 48;
+                const cardY = y;
+                const cards = [
+                    { label: 'Current Balance', value: totals.balance },
+                    { label: 'Total Income', value: totals.income },
+                    { label: 'Total Expenses', value: totals.expense }
+                ];
+
+                // Dark-friendly minimal boxes
+                cards.forEach((card, i) => {
+                    const x = margin + i * (cardW + 12);
+                    doc.setFillColor(28, 33, 44); // dark slate
+                    doc.roundedRect(x, cardY, cardW, cardH, 8, 8, 'F');
+                    doc.setTextColor(200);
+                    doc.setFontSize(10);
+                    doc.text(card.label, x + 12, cardY + 18);
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(14);
+                    doc.setTextColor(i === 0 ? [99, 102, 241] : i === 1 ? [16, 185, 129] : [239, 68, 68]);
+                    doc.text(formatCurrencyPlain(card.value), x + 12, cardY + 36);
+                    doc.setFont('helvetica', 'normal');
+                });
+
+                y = cardY + cardH + 24;
+
+                // Table Header
+                doc.setTextColor(230);
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(12);
+                doc.setFillColor(40, 48, 61);
+                const headerY = y;
+                doc.roundedRect(margin, headerY - 18, 560 - margin * 2, 28, 6, 6, 'F');
+                const columns = [
+                    { key: 'date', title: 'Date', width: 80 },
+                    { key: 'title', title: 'Title', width: 200 },
+                    { key: 'category', title: 'Category', width: 120 },
+                    { key: 'type', title: 'Type', width: 80 },
+                    { key: 'amount', title: 'Amount', width: 80 }
+                ];
+
+                let x = margin + 10;
+                columns.forEach(col => {
+                    doc.text(col.title, x, headerY);
+                    x += col.width;
+                });
+
+                y += 20;
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(10);
+                doc.setTextColor(210);
+
+                // Prepare all transactions sorted by date desc
+                const rows = [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+                const lineHeight = 16;
+                const maxY = 780; // bottom limit
+
+                rows.forEach((t, idx) => {
+                    if (y > maxY) {
+                        doc.addPage();
+                        y = margin;
+
+                        // Repeat header on new page
+                        doc.setTextColor(230);
+                        doc.setFont('helvetica', 'bold');
+                        doc.setFontSize(12);
+                        doc.setFillColor(40, 48, 61);
+                        const headerY2 = y;
+                        doc.roundedRect(margin, headerY2 - 18, 560 - margin * 2, 28, 6, 6, 'F');
+                        let x2 = margin + 10;
+                        columns.forEach(col => { doc.text(col.title, x2, headerY2); x2 += col.width; });
+                        y += 20;
+                        doc.setFont('helvetica', 'normal');
+                        doc.setFontSize(10);
+                        doc.setTextColor(210);
+                    }
+
+                    const cells = [
+                        new Date(t.date).toLocaleDateString(),
+                        t.title,
+                        getCategoryName(t.category),
+                        t.type === 'income' ? 'Income' : 'Expense',
+                        formatCurrencyPlain(t.amount)
+                    ];
+
+                    // zebra rows
+                    if (idx % 2 === 0) {
+                        doc.setFillColor(24, 29, 39);
+                        doc.rect(margin, y - 12, 560 - margin * 2, lineHeight, 'F');
+                    }
+
+                    let cx = margin + 10;
+                    cells.forEach((val, i) => {
+                        const w = columns[i].width;
+                        if (i === 4) {
+                            // amount right-aligned
+                            doc.text(String(val), cx + w - 10, y, { align: 'right' });
+                        } else {
+                            const txt = String(val);
+                            const maxWidth = w - 12;
+                            let drawTxt = txt;
+                            const measured = doc.getTextWidth(txt);
+                            if (measured > maxWidth) {
+                                // simple truncate with ellipsis
+                                while (doc.getTextWidth(drawTxt + '…') > maxWidth && drawTxt.length > 0) {
+                                    drawTxt = drawTxt.slice(0, -1);
+                                }
+                                drawTxt += '…';
+                            }
+                            doc.text(drawTxt, cx, y);
+                        }
+                        cx += w;
+                    });
+
+                    y += lineHeight;
+                });
+
+                // Footer page numbers
+                const pageCount = doc.internal.getNumberOfPages();
+                for (let i = 1; i <= pageCount; i++) {
+                    doc.setPage(i);
+                    doc.setFontSize(8);
+                    doc.setTextColor(160);
+                    doc.text(`Page ${i} of ${pageCount}`, 560 - margin, 810, { align: 'right' });
+                }
+
+                doc.save('Expense_Report.pdf');
+            }
+
+            function getTotals() {
+                const income = transactions.filter(t => t.type === 'income' && !t.isSplitRepayment).reduce((s, t) => s + t.amount, 0);
+                const totalExpenses = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+                const splitRepayments = transactions.filter(t => t.isSplitRepayment).reduce((s, t) => s + t.amount, 0);
+                const expense = totalExpenses - splitRepayments;
+                return { income, expense, balance: income - expense };
+            }
+
+            function formatCurrencyPlain(num) {
+                return '₹' + Number(num).toFixed(2);
+            }
             
             // Event Listeners for Expense App
             document.getElementById('expense-form').addEventListener('submit', addTransaction);
@@ -453,6 +750,12 @@
             document.getElementById('clear-all').addEventListener('click', clearAllTransactions);
             document.getElementById('cancel-delete').addEventListener('click', closeDeleteModal);
             document.getElementById('confirm-delete').addEventListener('click', confirmDelete);
+            document.getElementById('cancel-payment').addEventListener('click', closePartialPaymentModal);
+            document.getElementById('confirm-payment').addEventListener('click', confirmPartialPayment);
+            document.getElementById('cancel-method').addEventListener('click', closePaymentMethodModal);
+            document.getElementById('confirm-method').addEventListener('click', confirmPaymentMethod);
+
+            document.getElementById('analysis-date').addEventListener('change', updateCustomDateAnalysis);
             
             // Split expense toggle
             document.getElementById('is-split').addEventListener('change', function() {
@@ -470,6 +773,25 @@
             // Add initial person field
             addPersonField();
             
+            // Initialize date selectors
+            function initializeDateSelectors() {
+                // All selectors are already set to their default values in HTML
+                // No additional initialization needed
+            }
+            
+            function formatDateShort(date) {
+                return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+            }
+            
+            function formatDateFull(date) {
+                const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                return days[date.getDay()];
+            }
+            
+            function formatMonthYear(date) {
+                return date.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+            }
+
             // Functions for Expense App
             function addTransaction(e) {
                 e.preventDefault();
@@ -478,6 +800,7 @@
                 const amount = parseFloat(document.getElementById('amount').value);
                 const category = document.getElementById('category').value;
                 const date = document.getElementById('date').value;
+                const paymentMethod = document.getElementById('payment-method').value;
                 const notes = document.getElementById('notes').value;
                 const isSplit = document.getElementById('is-split').checked;
                 
@@ -512,6 +835,7 @@
                     amount,
                     category,
                     date,
+                    paymentMethod,
                     notes,
                     type: category === 'income' ? 'income' : 'expense',
                     isSplit,
@@ -543,6 +867,7 @@
                 saveTransactions();
                 saveSplitData();
                 updateSummary();
+                updateCustomDateAnalysis();
                 renderRecentTransactions();
                 renderTransactions();
                 renderSplitExpenses();
@@ -551,6 +876,7 @@
                 // Reset form
                 document.getElementById('expense-form').reset();
                 document.getElementById('date').valueAsDate = new Date();
+                document.getElementById('payment-method').value = 'online';
                 document.getElementById('split-details').classList.add('hidden');
                 document.getElementById('split-people').innerHTML = '';
                 addPersonField();
@@ -591,34 +917,181 @@
             
             function confirmDelete() {
                 if (currentDeleteId !== null) {
-                    // Check if it's a split expense
-                    const transaction = transactions.find(t => t.id === currentDeleteId);
-                    if (transaction && transaction.isSplit) {
-                        // Remove from splitExpenses
-                        splitExpenses = splitExpenses.filter(se => se.id !== currentDeleteId);
+                    const transactionToDelete = transactions.find(t => t.id === currentDeleteId);
+                    
+                    if (transactionToDelete && transactionToDelete.isSplit) {
+                        // Handle split expense deletion
                         
-                        // Update splitPeople totals
-                        if (transaction.splitWith && transaction.splitWith.length > 0) {
-                            transaction.splitWith.forEach(person => {
+                        // Remove from splitExpenses array
+                        splitExpenses = splitExpenses.filter(exp => exp.id !== currentDeleteId);
+                        
+                        // Adjust people's owed amounts
+                        if (transactionToDelete.splitWith) {
+                            transactionToDelete.splitWith.forEach(person => {
                                 const personIndex = splitPeople.findIndex(p => p.name === person.name);
                                 if (personIndex !== -1) {
                                     splitPeople[personIndex].totalOwed -= person.amount;
+                                    
+                                    // Ensure owed amount doesn't go negative
+                                    if (splitPeople[personIndex].totalOwed < 0) {
+                                        splitPeople[personIndex].totalOwed = 0;
+                                    }
                                 }
                             });
                         }
                         
+                        // Find and remove any repayments that would make balances negative
+                        const relatedRepayments = transactions.filter(t => 
+                            t.isSplitRepayment && 
+                            t.title.includes('from') &&
+                            transactionToDelete.splitWith &&
+                            transactionToDelete.splitWith.some(person => t.title.includes(person.name))
+                        );
+                        
+                        // Remove excessive repayments
+                        relatedRepayments.forEach(repayment => {
+                            const personName = transactionToDelete.splitWith.find(person => 
+                                repayment.title.includes(person.name)
+                            )?.name;
+                            
+                            if (personName) {
+                                const person = splitPeople.find(p => p.name === personName);
+                                if (person && person.totalOwed === 0) {
+                                    // Remove this repayment as it would create negative balance
+                                    transactions = transactions.filter(t => t.id !== repayment.id);
+                                }
+                            }
+                        });
+                        
                         saveSplitData();
-                        renderSplitExpenses();
                     }
                     
+                    // Remove the main transaction
                     transactions = transactions.filter(transaction => transaction.id !== currentDeleteId);
                     saveTransactions();
+                    
                     updateSummary();
+                    updateCustomDateAnalysis();
                     renderRecentTransactions();
                     renderTransactions();
+                    renderSplitExpenses();
                     updateCharts();
                     closeDeleteModal();
                 }
+            }
+
+            function closePartialPaymentModal() {
+                document.getElementById('partial-payment-modal').classList.add('hidden');
+                window.currentPaymentPerson = null;
+            }
+
+            function showPaymentMethodModal(personName, amount, type) {
+                document.getElementById('method-person-name').textContent = personName;
+                document.getElementById('method-amount').textContent = formatCurrency(amount);
+                document.getElementById('settlement-method').value = 'online';
+                document.getElementById('payment-method-modal').classList.remove('hidden');
+                
+                window.currentSettlement = { personName, amount, type };
+            }
+
+            function closePaymentMethodModal() {
+                document.getElementById('payment-method-modal').classList.add('hidden');
+                window.currentSettlement = null;
+            }
+
+            function confirmPaymentMethod() {
+                const settlement = window.currentSettlement;
+                if (!settlement) return;
+
+                const paymentMethod = document.getElementById('settlement-method').value;
+                const { personName, amount, type } = settlement;
+
+                // Add settlement as income transaction
+                const settlementTransaction = {
+                    id: Date.now(),
+                    title: `Settlement from ${personName}`,
+                    amount: amount,
+                    category: 'income',
+                    date: new Date().toISOString().split('T')[0],
+                    paymentMethod: paymentMethod,
+                    notes: 'Split expense paid back',
+                    type: 'income',
+                    isSplit: false,
+                    splitWith: [],
+                    isSplitRepayment: true
+                };
+                transactions.push(settlementTransaction);
+                saveTransactions();
+
+                // Zero out owed amount for this person
+                const person = splitPeople.find(p => p.name === personName);
+                if (person) {
+                    person.totalOwed = 0;
+                    saveSplitData();
+                }
+
+                // Refresh UI and charts
+                updateSummary();
+                updateCustomDateAnalysis();
+                renderRecentTransactions();
+                renderTransactions();
+                renderSplitExpenses();
+                updateCharts();
+
+                closePaymentMethodModal();
+            }
+
+            function confirmPartialPayment() {
+                const paymentAmount = parseFloat(document.getElementById('payment-amount').value);
+                const repaymentMethod = document.getElementById('repayment-method').value;
+                const personName = window.currentPaymentPerson;
+                
+                if (!personName || !paymentAmount || paymentAmount <= 0) {
+                    alert('Please enter a valid payment amount.');
+                    return;
+                }
+                
+                const person = splitPeople.find(p => p.name === personName);
+                if (!person || person.totalOwed <= 0) {
+                    alert('Person not found or no amount owed.');
+                    return;
+                }
+                
+                if (paymentAmount > person.totalOwed) {
+                    alert('Payment amount cannot be more than the total owed amount.');
+                    return;
+                }
+                
+                // Add partial payment as income transaction
+                const partialSettlement = {
+                    id: Date.now(),
+                    title: `Partial payment from ${personName}`,
+                    amount: paymentAmount,
+                    category: 'income',
+                    date: new Date().toISOString().split('T')[0],
+                    paymentMethod: repaymentMethod,
+                    notes: `Partial split expense payment (₹${(person.totalOwed - paymentAmount).toFixed(2)} remaining)`,
+                    type: 'income',
+                    isSplit: false,
+                    splitWith: [],
+                    isSplitRepayment: true
+                };
+                transactions.push(partialSettlement);
+                saveTransactions();
+                
+                // Reduce the owed amount
+                person.totalOwed -= paymentAmount;
+                saveSplitData();
+                
+                // Refresh UI and charts
+                updateSummary();
+                updateCustomDateAnalysis();
+                renderRecentTransactions();
+                renderTransactions();
+                renderSplitExpenses();
+                updateCharts();
+                
+                closePartialPaymentModal();
             }
             
             function clearAllTransactions() {
@@ -636,6 +1109,7 @@
 
                 // Refresh UI
                 updateSummary();
+                updateCustomDateAnalysis();
                 renderRecentTransactions();
                 renderTransactions();
                 renderSplitExpenses();
@@ -662,18 +1136,130 @@
             
             function updateSummary() {
                 const income = transactions
-                    .filter(transaction => transaction.type === 'income')
+                    .filter(transaction => transaction.type === 'income' && !transaction.isSplitRepayment)
                     .reduce((total, transaction) => total + transaction.amount, 0);
                 
-                const expense = transactions
+                const totalExpenses = transactions
                     .filter(transaction => transaction.type === 'expense')
                     .reduce((total, transaction) => total + transaction.amount, 0);
                 
-                const balance = income - expense;
+                const splitRepayments = transactions
+                    .filter(transaction => transaction.isSplitRepayment)
+                    .reduce((total, transaction) => total + transaction.amount, 0);
+                
+                // Calculate cash in hand
+                const cashIncome = transactions
+                    .filter(transaction => transaction.type === 'income' && transaction.paymentMethod === 'cash')
+                    .reduce((total, transaction) => total + transaction.amount, 0);
+                
+                const cashExpenses = transactions
+                    .filter(transaction => transaction.type === 'expense' && transaction.paymentMethod === 'cash')
+                    .reduce((total, transaction) => total + transaction.amount, 0);
+                
+                const cashInHand = cashIncome - cashExpenses;
+                
+                // Calculate online balance
+                const onlineIncome = transactions
+                    .filter(transaction => transaction.type === 'income' && transaction.paymentMethod === 'online')
+                    .reduce((total, transaction) => total + transaction.amount, 0);
+                
+                const onlineExpenses = transactions
+                    .filter(transaction => transaction.type === 'expense' && transaction.paymentMethod === 'online')
+                    .reduce((total, transaction) => total + transaction.amount, 0);
+                
+                const onlineBalance = onlineIncome - onlineExpenses;
+                
+                const netExpenses = totalExpenses - splitRepayments;
+                const balance = income - netExpenses;
                 
                 document.getElementById('balance').textContent = formatCurrency(balance);
+                document.getElementById('cash-in-hand').textContent = formatCurrency(cashInHand);
+                document.getElementById('online-balance').textContent = formatCurrency(onlineBalance);
                 document.getElementById('income').textContent = formatCurrency(income);
-                document.getElementById('expense').textContent = formatCurrency(expense);
+                document.getElementById('expense').textContent = formatCurrency(netExpenses);
+            }
+
+            function updateCustomDateAnalysis() {
+                const selectedDateInput = document.getElementById('analysis-date');
+                if (!selectedDateInput.value) return;
+                
+                const selectedDate = new Date(selectedDateInput.value);
+                const selectedDateString = selectedDateInput.value;
+                
+                // Calculate net spending for the selected day
+                const dayExpenses = transactions
+                    .filter(transaction => transaction.type === 'expense' && transaction.date === selectedDateString)
+                    .reduce((total, transaction) => total + transaction.amount, 0);
+                
+                const dayRepayments = transactions
+                    .filter(transaction => transaction.isSplitRepayment && transaction.date === selectedDateString)
+                    .reduce((total, transaction) => total + transaction.amount, 0);
+                
+                const daySpent = dayExpenses - dayRepayments;
+                
+                // Calculate net spending for the selected month
+                const monthStart = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+                const monthEnd = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0);
+                
+                const monthExpenses = transactions
+                    .filter(transaction => {
+                        const transactionDate = new Date(transaction.date);
+                        return transaction.type === 'expense' && 
+                               transactionDate >= monthStart && 
+                               transactionDate <= monthEnd;
+                    })
+                    .reduce((total, transaction) => total + transaction.amount, 0);
+                
+                const monthRepayments = transactions
+                    .filter(transaction => {
+                        const transactionDate = new Date(transaction.date);
+                        return transaction.isSplitRepayment && 
+                               transactionDate >= monthStart && 
+                               transactionDate <= monthEnd;
+                    })
+                    .reduce((total, transaction) => total + transaction.amount, 0);
+                
+                const monthSpent = monthExpenses - monthRepayments;
+                
+                // Calculate net spending for the selected year
+                const yearExpenses = transactions
+                    .filter(transaction => {
+                        const transactionDate = new Date(transaction.date);
+                        return transaction.type === 'expense' && 
+                               transactionDate.getFullYear() === selectedDate.getFullYear();
+                    })
+                    .reduce((total, transaction) => total + transaction.amount, 0);
+                
+                const yearRepayments = transactions
+                    .filter(transaction => {
+                        const transactionDate = new Date(transaction.date);
+                        return transaction.isSplitRepayment && 
+                               transactionDate.getFullYear() === selectedDate.getFullYear();
+                    })
+                    .reduce((total, transaction) => total + transaction.amount, 0);
+                
+                const yearSpent = yearExpenses - yearRepayments;
+                
+                // Update labels with formatted dates
+                const dayLabel = selectedDate.toLocaleDateString('en-US', { 
+                    weekday: 'short', 
+                    month: 'short', 
+                    day: 'numeric' 
+                });
+                const monthLabel = selectedDate.toLocaleDateString('en-US', { 
+                    month: 'long', 
+                    year: 'numeric' 
+                });
+                const yearLabel = selectedDate.getFullYear().toString();
+                
+                document.getElementById('selected-day-label').textContent = dayLabel;
+                document.getElementById('selected-month-label').textContent = monthLabel;
+                document.getElementById('selected-year-label').textContent = yearLabel;
+                
+                // Update amounts
+                document.getElementById('selected-day-amount').textContent = formatCurrency(daySpent);
+                document.getElementById('selected-month-amount').textContent = formatCurrency(monthSpent);
+                document.getElementById('selected-year-amount').textContent = formatCurrency(yearSpent);
             }
             
             function renderRecentTransactions() {
@@ -708,6 +1294,11 @@
                         splitBadge = `<span class="ml-2 text-xs px-2 py-0.5 rounded-full bg-indigo-900 text-indigo-300">Split</span>`;
                     }
                     
+                    let paymentBadge = '';
+                    if (transaction.paymentMethod === 'cash') {
+                        paymentBadge = `<span class="ml-2 text-xs px-2 py-0.5 rounded-full bg-green-900 text-green-300">Cash</span>`;
+                    }
+                    
                     transactionEl.innerHTML = `
                         <div class="flex items-center justify-between">
                             <div class="flex items-center space-x-3">
@@ -720,6 +1311,7 @@
                                         <span class="text-xs text-gray-400">${formatDate(transaction.date)}</span>
                                         <span class="text-xs px-2 py-0.5 rounded-full ${getCategoryBadgeColor(transaction.category)}">${getCategoryName(transaction.category)}</span>
                                         ${splitBadge}
+                                        ${paymentBadge}
                                     </div>
                                 </div>
                             </div>
@@ -800,6 +1392,11 @@
                     let splitBadge = '';
                     let splitDetails = '';
                     
+                    let paymentBadge = '';
+                    if (transaction.paymentMethod === 'cash') {
+                        paymentBadge = `<span class="ml-2 text-xs px-2 py-0.5 rounded-full bg-green-900 text-green-300">Cash</span>`;
+                    }
+                    
                     if (transaction.isSplit && transaction.splitWith && transaction.splitWith.length > 0) {
                         splitBadge = `<span class="ml-2 text-xs px-2 py-0.5 rounded-full bg-indigo-900 text-indigo-300">Split</span>`;
                         
@@ -829,6 +1426,7 @@
                                         <span class="text-xs text-gray-400">${formatDate(transaction.date)}</span>
                                         <span class="text-xs px-2 py-0.5 rounded-full ${getCategoryBadgeColor(transaction.category)}">${getCategoryName(transaction.category)}</span>
                                         ${splitBadge}
+                                        ${paymentBadge}
                                     </div>
                                 </div>
                             </div>
@@ -905,7 +1503,12 @@
                                     </div>
                                     <div class="flex items-center gap-3">
                                         <span class="text-green-400 font-semibold">${formatCurrency(person.totalOwed)}</span>
-                                        ${person.totalOwed > 0 ? `<button type="button" data-mark-paid data-name="${person.name}" class="px-3 py-1.5 text-sm rounded-lg bg-green-600 hover:bg-green-700 text-white">Mark as paid</button>` : `<span class="text-xs px-2 py-1 rounded-full bg-gray-700 text-gray-300">Settled</span>`}
+                                        ${person.totalOwed > 0 ? `
+                                            <div class="flex gap-2">
+                                                <button type="button" data-partial-payment data-name="${person.name}" class="px-3 py-1.5 text-sm rounded-lg bg-blue-600 hover:bg-blue-700 text-white">Partial Payment</button>
+                                                <button type="button" data-mark-paid data-name="${person.name}" class="px-3 py-1.5 text-sm rounded-lg bg-green-600 hover:bg-green-700 text-white">Mark as Paid</button>
+                                            </div>
+                                        ` : `<span class="text-xs px-2 py-1 rounded-full bg-gray-700 text-gray-300">Settled</span>`}
                                     </div>
                                 </div>
                             `).join('')}
@@ -961,31 +1564,27 @@
                         const person = splitPeople.find(p => p.name === name);
                         if (!person || person.totalOwed <= 0) return;
 
-                        // Add to balance as income (settlement)
-                        const settlement = {
-                            id: Date.now(),
-                            title: `Settlement from ${name}`,
-                            amount: person.totalOwed,
-                            category: 'income',
-                            date: new Date().toISOString().split('T')[0],
-                            notes: 'Split expense paid back',
-                            type: 'income',
-                            isSplit: false,
-                            splitWith: []
-                        };
-                        transactions.push(settlement);
-                        saveTransactions();
+                        // Show payment method selection modal
+                        showPaymentMethodModal(name, person.totalOwed, 'full');
+                    });
+                });
 
-                        // Zero out owed amount for this person
-                        person.totalOwed = 0;
-                        saveSplitData();
+                // Attach click handlers for partial payment buttons
+                document.querySelectorAll('[data-partial-payment]').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const name = btn.getAttribute('data-name');
+                        const person = splitPeople.find(p => p.name === name);
+                        if (!person || person.totalOwed <= 0) return;
 
-                        // Refresh UI and charts
-                        updateSummary();
-                        renderRecentTransactions();
-                        renderTransactions();
-                        renderSplitExpenses();
-                        updateCharts();
+                        // Show partial payment modal
+                        document.getElementById('payment-person-name').textContent = name;
+                        document.getElementById('payment-total-owed').textContent = formatCurrency(person.totalOwed);
+                        document.getElementById('payment-amount').value = '';
+                        document.getElementById('payment-amount').max = person.totalOwed;
+                        document.getElementById('partial-payment-modal').classList.remove('hidden');
+                        
+                        // Store current person for later use
+                        window.currentPaymentPerson = name;
                     });
                 });
             }
@@ -1116,14 +1715,20 @@
                 
                 // Income vs Expense Chart
                 const totalIncome = transactions
-                    .filter(transaction => transaction.type === 'income')
+                    .filter(transaction => transaction.type === 'income' && !transaction.isSplitRepayment)
                     .reduce((total, transaction) => total + transaction.amount, 0);
                 
-                const totalExpense = transactions
+                const totalExpenses = transactions
                     .filter(transaction => transaction.type === 'expense')
                     .reduce((total, transaction) => total + transaction.amount, 0);
                 
-                incomeExpenseChart.data.datasets[0].data = [totalIncome, totalExpense];
+                const splitRepayments = transactions
+                    .filter(transaction => transaction.isSplitRepayment)
+                    .reduce((total, transaction) => total + transaction.amount, 0);
+                
+                const netExpenses = totalExpenses - splitRepayments;
+                
+                incomeExpenseChart.data.datasets[0].data = [totalIncome, netExpenses];
                 incomeExpenseChart.update();
                 
                 // Category Chart
@@ -1180,10 +1785,13 @@
                     const monthKey = `${date.getFullYear()}-${date.getMonth() + 1}`;
                     
                     if (monthlyData[monthKey]) {
-                        if (transaction.type === 'income') {
+                        if (transaction.type === 'income' && !transaction.isSplitRepayment) {
                             monthlyData[monthKey].income += transaction.amount;
-                        } else {
+                        } else if (transaction.type === 'expense') {
                             monthlyData[monthKey].expense += transaction.amount;
+                        } else if (transaction.isSplitRepayment) {
+                            // Subtract split repayments from expenses to show net spending
+                            monthlyData[monthKey].expense -= transaction.amount;
                         }
                     }
                 });
@@ -1273,5 +1881,5 @@
             }
         });
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97df4d8524a9160c',t:'MTc1NzY3OTAzOC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'981ff34726c53ae6',t:'MTc1ODM1NjkxNi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
