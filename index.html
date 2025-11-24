@@ -1,21 +1,20 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Expense Tracker - Dark Theme</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- jsPDF for PDF generation -->
-    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-    <style>
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Expense Tracker - Dark Theme</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"><!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script><!-- jsPDF for PDF generation -->
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <style>
         body {
             font-family: 'Inter', sans-serif;
             background: #111827; /* Dark background */
             min-height: 100vh;
             color: #e5e7eb;
+            box-sizing: border-box;
         }
         .card {
             background: #1f2937; /* Darker card background */
@@ -105,380 +104,250 @@
             to { opacity: 1; transform: translateY(0); }
         }
     </style>
-</head>
-<body>
-    <div id="expense-app" class="min-h-screen max-w-6xl mx-auto px-4 py-8">
-        <!-- Header -->
-        <header class="flex flex-col md:flex-row justify-between items-center mb-8">
-            <div class="mb-4 md:mb-0">
-                <div class="flex items-center">
-                    <div class="w-12 h-12 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg mr-3">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="2" y="5" width="20" height="14" rx="2" />
-                            <line x1="2" y1="10" x2="22" y2="10" />
-                        </svg>
-                    </div>
-                    <div>
-                        <h1 class="text-3xl font-bold text-white mb-1">Expense Tracker</h1>
-                        <p class="text-gray-400">Track your expenses in Indian Rupees (₹)</p>
-                    </div>
-                </div>
-            </div>
-            <!-- PDF download button removed as requested -->
-        </header>
-
-        <!-- Navigation Tabs -->
-        <div class="flex border-b border-gray-700 mb-8 overflow-x-auto">
-            <button id="dashboard-tab" class="nav-tab active py-3 px-6 font-medium">Dashboard</button>
-            <button id="transactions-tab" class="nav-tab py-3 px-6 font-medium">Transactions</button>
-            <button id="split-tab" class="nav-tab py-3 px-6 font-medium">Split Expenses</button>
-            <button id="analytics-tab" class="nav-tab py-3 px-6 font-medium">Analytics</button>
-        </div>
-
-        <!-- Dashboard Section -->
-        <div id="dashboard-section" class="content-section active">
-            <!-- Summary Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
-                <div class="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-6 text-white shadow-lg">
-                    <h2 class="text-lg font-medium opacity-90 mb-1">Current Balance</h2>
-                    <p class="text-3xl font-bold" id="balance">₹0.00</p>
-                </div>
-                <div class="bg-gradient-to-r from-purple-600 to-violet-600 rounded-2xl p-6 text-white shadow-lg">
-                    <h2 class="text-lg font-medium opacity-90 mb-1">Cash in Hand</h2>
-                    <p class="text-3xl font-bold" id="cash-in-hand">₹0.00</p>
-                </div>
-                <div class="bg-gradient-to-r from-cyan-600 to-blue-600 rounded-2xl p-6 text-white shadow-lg">
-                    <h2 class="text-lg font-medium opacity-90 mb-1">Online Balance</h2>
-                    <p class="text-3xl font-bold" id="online-balance">₹0.00</p>
-                </div>
-                <div class="bg-gradient-to-r from-green-600 to-emerald-600 rounded-2xl p-6 text-white shadow-lg">
-                    <h2 class="text-lg font-medium opacity-90 mb-1">Total Income</h2>
-                    <p class="text-3xl font-bold" id="income">₹0.00</p>
-                </div>
-                <div class="bg-gradient-to-r from-red-600 to-rose-600 rounded-2xl p-6 text-white shadow-lg">
-                    <h2 class="text-lg font-medium opacity-90 mb-1">Total Expenses</h2>
-                    <p class="text-3xl font-bold" id="expense">₹0.00</p>
-                </div>
-            </div>
-
-
-
-            <!-- Custom Date Analysis -->
-            <div class="card shadow-lg p-6 mb-8">
-                <h2 class="text-xl font-semibold text-gray-100 mb-4">Custom Date Analysis</h2>
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-                    <div>
-                        <label for="analysis-date" class="block text-sm font-medium text-gray-300 mb-2">Select Date</label>
-                        <input type="date" id="analysis-date" class="form-input w-full px-4 py-2">
-                    </div>
-                    <div class="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl p-4 text-white">
-                        <h3 class="text-sm font-medium opacity-90 mb-1" id="selected-day-label">Selected Day</h3>
-                        <p class="text-xl font-bold" id="selected-day-amount">₹0.00</p>
-                    </div>
-                    <div class="bg-gradient-to-r from-blue-600 to-cyan-600 rounded-xl p-4 text-white">
-                        <h3 class="text-sm font-medium opacity-90 mb-1" id="selected-month-label">Selected Month</h3>
-                        <p class="text-xl font-bold" id="selected-month-amount">₹0.00</p>
-                    </div>
-                    <div class="bg-gradient-to-r from-green-600 to-emerald-600 rounded-xl p-4 text-white">
-                        <h3 class="text-sm font-medium opacity-90 mb-1" id="selected-year-label">Selected Year</h3>
-                        <p class="text-xl font-bold" id="selected-year-amount">₹0.00</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <!-- Add Transaction Form -->
-                <div class="lg:col-span-1">
-                    <div class="card shadow-lg p-6">
-                        <h2 class="text-xl font-semibold text-gray-100 mb-6">Add New Transaction</h2>
-                        <form id="expense-form" class="space-y-4">
-                            <div>
-                                <label for="title" class="block text-sm font-medium text-gray-300 mb-1">Title</label>
-                                <input type="text" id="title" required class="form-input w-full px-4 py-2" placeholder="What was it for?">
-                            </div>
-                            
-                            <div>
-                                <label for="amount" class="block text-sm font-medium text-gray-300 mb-1">Amount (₹)</label>
-                                <input type="number" id="amount" required min="0" step="0.01" class="form-input w-full px-4 py-2" placeholder="0.00">
-                            </div>
-                            
-                            <div>
-                                <label for="category" class="block text-sm font-medium text-gray-300 mb-1">Category</label>
-                                <select id="category" required class="form-input w-full px-4 py-2">
-                                    <option value="" disabled selected>Select a category</option>
-                                    <option value="income">Income</option>
-                                    <option value="food">Food & Dining</option>
-                                    <option value="transport">Transportation</option>
-                                    <option value="shopping">Shopping</option>
-                                    <option value="entertainment">Entertainment</option>
-                                    <option value="bills">Bills & Utilities</option>
-                                    <option value="health">Healthcare</option>
-                                    <option value="education">Education</option>
-                                    <option value="travel">Travel</option>
-                                    <option value="other">Other</option>
-                                </select>
-                            </div>
-                            
-                            <div>
-                                <label for="date" class="block text-sm font-medium text-gray-300 mb-1">Date</label>
-                                <input type="date" id="date" required class="form-input w-full px-4 py-2">
-                            </div>
-                            
-                            <div>
-                                <label for="payment-method" class="block text-sm font-medium text-gray-300 mb-1">Payment Method</label>
-                                <select id="payment-method" required class="form-input w-full px-4 py-2">
-                                    <option value="online">Online</option>
-                                    <option value="cash">Cash</option>
-                                </select>
-                            </div>
-                            
-                            <div>
-                                <label for="notes" class="block text-sm font-medium text-gray-300 mb-1">Notes (Optional)</label>
-                                <textarea id="notes" rows="2" class="form-input w-full px-4 py-2" placeholder="Add any additional details..."></textarea>
-                            </div>
-                            
-                            <!-- Split expense checkbox -->
-                            <div class="flex items-center">
-                                <input type="checkbox" id="is-split" class="rounded bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500 h-4 w-4">
-                                <label for="is-split" class="ml-2 text-sm text-gray-300">This is a split expense</label>
-                            </div>
-                            
-                            <!-- Split expense details (hidden by default) -->
-                            <div id="split-details" class="hidden space-y-3 p-3 bg-gray-800 rounded-lg">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-300 mb-1">Split with</label>
-                                    <div id="split-people" class="space-y-2">
-                                        <div class="flex items-center space-x-2">
-                                            <input type="text" placeholder="Person name" class="form-input flex-grow px-3 py-1.5 text-sm">
-                                            <input type="number" placeholder="Amount ₹" class="form-input w-24 px-3 py-1.5 text-sm">
-                                            <button type="button" class="remove-person text-red-400 hover:text-red-300">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                                                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                                                </svg>
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <button type="button" id="add-person" class="mt-2 text-sm text-indigo-400 hover:text-indigo-300 flex items-center">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1">
-                                            <line x1="12" y1="5" x2="12" y2="19"></line>
-                                            <line x1="5" y1="12" x2="19" y2="12"></line>
-                                        </svg>
-                                        Add Person
-                                    </button>
-                                </div>
-                            </div>
-                            
-                            <button type="submit" class="w-full btn-gradient text-white font-medium py-2.5 px-4 rounded-xl shadow-md hover:shadow-lg transition-all">
-                                Add Transaction
-                            </button>
-                        </form>
-                    </div>
-                </div>
-                
-                <!-- Recent Transactions -->
-                <div class="lg:col-span-2">
-                    <div class="card shadow-lg p-6 h-full">
-                        <div class="flex justify-between items-center mb-6">
-                            <h2 class="text-xl font-semibold text-gray-100">Recent Transactions</h2>
-                            <a href="#" id="view-all-transactions" class="text-indigo-400 hover:text-indigo-300 text-sm font-medium">View All</a>
-                        </div>
-                        
-                        <div id="recent-transactions" class="space-y-3 max-h-[400px] overflow-y-auto pr-2">
-                            <div class="text-center py-8 text-gray-400">
-                                No transactions yet. Add your first one!
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Transactions Section -->
-        <div id="transactions-section" class="content-section">
-            <div class="card shadow-lg p-6 mb-8">
-                <div class="flex flex-col md:flex-row justify-between items-center mb-6">
-                    <h2 class="text-2xl font-semibold text-gray-100 mb-4 md:mb-0">All Transactions</h2>
-                    <div class="flex flex-wrap gap-2">
-                        <select id="filter-category" class="form-input px-3 py-1.5 text-sm">
-                            <option value="all">All Categories</option>
-                            <option value="income">Income</option>
-                            <option value="food">Food & Dining</option>
-                            <option value="transport">Transportation</option>
-                            <option value="shopping">Shopping</option>
-                            <option value="entertainment">Entertainment</option>
-                            <option value="bills">Bills & Utilities</option>
-                            <option value="health">Healthcare</option>
-                            <option value="education">Education</option>
-                            <option value="travel">Travel</option>
-                            <option value="other">Other</option>
-                        </select>
-                        <select id="filter-month" class="form-input px-3 py-1.5 text-sm">
-                            <option value="all">All Time</option>
-                            <option value="current">Current Month</option>
-                            <option value="last">Last Month</option>
-                            <option value="last3">Last 3 Months</option>
-                            <option value="last6">Last 6 Months</option>
-                        </select>
-                        <select id="filter-split" class="form-input px-3 py-1.5 text-sm">
-                            <option value="all">All Transactions</option>
-                            <option value="split">Split Expenses Only</option>
-                            <option value="regular">Regular Expenses Only</option>
-                        </select>
-                        <button id="clear-all" class="px-3 py-1.5 text-sm bg-red-600 text-white hover:bg-red-700 rounded-xl transition-all">
-                            Clear All
-                        </button>
-                    </div>
-                </div>
-                
-                <div id="transaction-list" class="space-y-3 max-h-[500px] overflow-y-auto pr-2">
-                    <div class="text-center py-8 text-gray-400">
-                        No transactions yet. Add your first one!
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Split Expenses Section -->
-        <div id="split-section" class="content-section">
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <!-- Split Expenses Summary -->
-                <div class="card shadow-lg p-6">
-                    <h2 class="text-xl font-semibold text-gray-100 mb-6">Split Expenses Summary</h2>
-                    
-                    <div id="split-summary" class="space-y-4">
-                        <div class="text-center py-8 text-gray-400">
-                            No split expenses yet. Add your first one!
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- People You Split With -->
-                <div class="card shadow-lg p-6">
-                    <h2 class="text-xl font-semibold text-gray-100 mb-6">People You Split With</h2>
-                    
-                    <div id="split-people-list" class="space-y-4">
-                        <div class="text-center py-8 text-gray-400">
-                            No people added yet. Add a split expense to get started.
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="card shadow-lg p-6 mt-8">
-                <h2 class="text-xl font-semibold text-gray-100 mb-6">Split Expense History</h2>
-                
-                <div id="split-history" class="space-y-3 max-h-[400px] overflow-y-auto pr-2">
-                    <div class="text-center py-8 text-gray-400">
-                        No split expenses yet. Add your first one!
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Analytics Section -->
-        <div id="analytics-section" class="content-section">
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                <!-- Income vs Expenses Chart -->
-                <div class="card shadow-lg p-6">
-                    <h2 class="text-xl font-semibold text-gray-100 mb-4">Income vs Expenses</h2>
-                    <div class="chart-container">
-                        <canvas id="income-expense-chart"></canvas>
-                    </div>
-                </div>
-                
-                <!-- Category Breakdown Chart -->
-                <div class="card shadow-lg p-6">
-                    <h2 class="text-xl font-semibold text-gray-100 mb-4">Expense Breakdown</h2>
-                    <div class="chart-container">
-                        <canvas id="category-chart"></canvas>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="card shadow-lg p-6">
-                <h2 class="text-xl font-semibold text-gray-100 mb-4">Monthly Trend</h2>
-                <div class="chart-container" style="height: 350px;">
-                    <canvas id="trend-chart"></canvas>
-                </div>
-            </div>
-        </div>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+  <script src="/_sdk/element_sdk.js" type="text/javascript"></script>
+ </head>
+ <body>
+  <div id="expense-app" class="min-h-screen max-w-6xl mx-auto px-4 py-8"><!-- Header -->
+   <header class="flex flex-col md:flex-row justify-between items-center mb-8">
+    <div class="mb-4 md:mb-0">
+     <div class="flex items-center">
+      <div class="w-12 h-12 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg mr-3">
+       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewbox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2" /> <line x1="2" y1="10" x2="22" y2="10" />
+       </svg>
+      </div>
+      <div>
+       <h1 class="text-3xl font-bold text-white mb-1">Expense Tracker</h1>
+       <p class="text-gray-400">Track your expenses in Indian Rupees (₹)</p>
+      </div>
+     </div>
+    </div><!-- PDF download button removed as requested -->
+   </header><!-- Navigation Tabs -->
+   <div class="flex border-b border-gray-700 mb-8 overflow-x-auto"><button id="dashboard-tab" class="nav-tab active py-3 px-6 font-medium">Dashboard</button> <button id="transactions-tab" class="nav-tab py-3 px-6 font-medium">Transactions</button> <button id="split-tab" class="nav-tab py-3 px-6 font-medium">Split Expenses</button> <button id="analytics-tab" class="nav-tab py-3 px-6 font-medium">Analytics</button>
+   </div><!-- Dashboard Section -->
+   <div id="dashboard-section" class="content-section active"><!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+     <div class="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-6 text-white shadow-lg">
+      <h2 class="text-sm font-medium opacity-90 mb-1">Current Balance</h2>
+      <p class="text-xl font-bold break-words" id="balance">₹0.00</p>
+     </div>
+     <div class="bg-gradient-to-r from-purple-600 to-violet-600 rounded-2xl p-6 text-white shadow-lg">
+      <h2 class="text-sm font-medium opacity-90 mb-1">Cash in Hand</h2>
+      <p class="text-xl font-bold break-words" id="cash-in-hand">₹0.00</p>
+     </div>
+     <div class="bg-gradient-to-r from-cyan-600 to-blue-600 rounded-2xl p-6 text-white shadow-lg">
+      <h2 class="text-sm font-medium opacity-90 mb-1">Online Balance</h2>
+      <p class="text-xl font-bold break-words" id="online-balance">₹0.00</p>
+     </div>
+     <div class="bg-gradient-to-r from-green-600 to-emerald-600 rounded-2xl p-6 text-white shadow-lg">
+      <h2 class="text-sm font-medium opacity-90 mb-1">Total Income</h2>
+      <p class="text-xl font-bold break-words" id="income">₹0.00</p>
+     </div>
+     <div class="bg-gradient-to-r from-red-600 to-rose-600 rounded-2xl p-6 text-white shadow-lg">
+      <h2 class="text-sm font-medium opacity-90 mb-1">Total Expenses</h2>
+      <p class="text-xl font-bold break-words" id="expense">₹0.00</p>
+     </div>
+    </div><!-- Custom Date Analysis -->
+    <div class="card shadow-lg p-6 mb-8">
+     <h2 class="text-xl font-semibold text-gray-100 mb-4">Custom Date Analysis</h2>
+     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+      <div><label for="analysis-date" class="block text-sm font-medium text-gray-300 mb-2">Select Date</label> <input type="date" id="analysis-date" class="form-input w-full px-4 py-2">
+      </div>
+      <div class="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl p-4 text-white">
+       <h3 class="text-sm font-medium opacity-90 mb-1" id="selected-day-label">Selected Day</h3>
+       <p class="text-xl font-bold" id="selected-day-amount">₹0.00</p>
+      </div>
+      <div class="bg-gradient-to-r from-blue-600 to-cyan-600 rounded-xl p-4 text-white">
+       <h3 class="text-sm font-medium opacity-90 mb-1" id="selected-month-label">Selected Month</h3>
+       <p class="text-xl font-bold" id="selected-month-amount">₹0.00</p>
+      </div>
+      <div class="bg-gradient-to-r from-green-600 to-emerald-600 rounded-xl p-4 text-white">
+       <h3 class="text-sm font-medium opacity-90 mb-1" id="selected-year-label">Selected Year</h3>
+       <p class="text-xl font-bold" id="selected-year-amount">₹0.00</p>
+      </div>
+     </div>
+    </div><!-- Money Transfer Section -->
+    <div class="card shadow-lg p-6 mb-8">
+     <h2 class="text-xl font-semibold text-gray-100 mb-4">Transfer Money</h2>
+     <p class="text-gray-300 mb-4">Move leftover pocket money to your savings account at the end of the month</p><!-- Savings Account Balance Card -->
+     <div class="bg-gradient-to-r from-amber-600 to-orange-600 rounded-2xl p-6 text-white shadow-lg mb-6">
+      <h2 class="text-lg font-medium opacity-90 mb-1">Savings Account Balance</h2>
+      <p class="text-3xl font-bold" id="transfer-savings-balance">₹0.00</p>
+     </div>
+     <div class="grid grid-cols-1 md:grid-cols-3 gap-6"><!-- Transfer from Cash -->
+      <div class="bg-gray-800 border border-gray-700 rounded-xl p-4">
+       <h3 class="text-lg font-medium text-gray-200 mb-3 flex items-center"><span class="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center mr-2">💵</span> Cash to Savings</h3>
+       <p class="text-sm text-gray-400 mb-3">Available: <span id="available-cash" class="text-green-400 font-medium">₹0.00</span></p>
+       <div class="space-y-3"><input type="number" id="cash-transfer-amount" placeholder="Amount to transfer" min="0" step="0.01" class="form-input w-full px-3 py-2 text-sm"> <button id="transfer-cash-btn" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-xl text-sm font-medium transition-all"> Transfer to Savings </button>
+       </div>
+      </div><!-- Transfer from Online -->
+      <div class="bg-gray-800 border border-gray-700 rounded-xl p-4">
+       <h3 class="text-lg font-medium text-gray-200 mb-3 flex items-center"><span class="w-8 h-8 bg-cyan-600 rounded-lg flex items-center justify-center mr-2">💳</span> Online to Savings</h3>
+       <p class="text-sm text-gray-400 mb-3">Available: <span id="available-online" class="text-cyan-400 font-medium">₹0.00</span></p>
+       <div class="space-y-3"><input type="number" id="online-transfer-amount" placeholder="Amount to transfer" min="0" step="0.01" class="form-input w-full px-3 py-2 text-sm"> <button id="transfer-online-btn" class="w-full bg-cyan-600 hover:bg-cyan-700 text-white py-2 px-4 rounded-xl text-sm font-medium transition-all"> Transfer to Savings </button>
+       </div>
+      </div><!-- Quick Transfer All -->
+      <div class="bg-gray-800 border border-gray-700 rounded-xl p-4">
+       <h3 class="text-lg font-medium text-gray-200 mb-3 flex items-center"><span class="w-8 h-8 bg-amber-600 rounded-lg flex items-center justify-center mr-2">🏦</span> Quick Save All</h3>
+       <p class="text-sm text-gray-400 mb-3">Total Available: <span id="total-available" class="text-amber-400 font-medium">₹0.00</span></p>
+       <div class="space-y-3"><button id="save-all-btn" class="w-full bg-amber-600 hover:bg-amber-700 text-white py-2 px-4 rounded-xl text-sm font-medium transition-all"> Save All to Savings </button>
+        <p class="text-xs text-gray-500 text-center">Transfers all cash + online money</p>
+       </div>
+      </div>
+     </div>
     </div>
-
-    <!-- Delete Confirmation Modal -->
-    <div id="delete-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 hidden">
-        <div class="bg-gray-800 rounded-2xl p-6 max-w-md w-full mx-4 border border-gray-700 modal-enter">
-            <h3 class="text-xl font-semibold text-gray-100 mb-4">Delete Transaction</h3>
-            <p class="text-gray-300 mb-6">Are you sure you want to delete this transaction? This action cannot be undone.</p>
-            <div class="flex justify-end space-x-3">
-                <button id="cancel-delete" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-xl transition-all">
-                    Cancel
-                </button>
-                <button id="confirm-delete" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl transition-all">
-                    Delete
-                </button>
-            </div>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8"><!-- Add Transaction Form -->
+     <div class="lg:col-span-1">
+      <div class="card shadow-lg p-6">
+       <h2 class="text-xl font-semibold text-gray-100 mb-6">Add New Transaction</h2>
+       <form id="expense-form" class="space-y-4">
+        <div><label for="title" class="block text-sm font-medium text-gray-300 mb-1">Title</label> <input type="text" id="title" required class="form-input w-full px-4 py-2" placeholder="What was it for?">
         </div>
-    </div>
-
-    <!-- Partial Payment Modal -->
-    <div id="partial-payment-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 hidden">
-        <div class="bg-gray-800 rounded-2xl p-6 max-w-md w-full mx-4 border border-gray-700 modal-enter">
-            <h3 class="text-xl font-semibold text-gray-100 mb-4">Record Partial Payment</h3>
-            <div class="mb-4">
-                <p class="text-gray-300 mb-2">Person: <span id="payment-person-name" class="font-medium text-white"></span></p>
-                <p class="text-gray-300 mb-4">Total Owed: <span id="payment-total-owed" class="font-medium text-green-400"></span></p>
-            </div>
-            <div class="mb-4">
-                <label for="payment-amount" class="block text-sm font-medium text-gray-300 mb-2">Payment Amount (₹)</label>
-                <input type="number" id="payment-amount" min="0" step="0.01" class="form-input w-full px-4 py-2" placeholder="0.00">
-                <p class="text-xs text-gray-400 mt-1">Enter the amount they're paying now</p>
-            </div>
-            <div class="mb-6">
-                <label for="repayment-method" class="block text-sm font-medium text-gray-300 mb-2">Payment Method</label>
-                <select id="repayment-method" class="form-input w-full px-4 py-2">
-                    <option value="online">Online</option>
-                    <option value="cash">Cash</option>
-                </select>
-            </div>
-            <div class="flex justify-end space-x-3">
-                <button id="cancel-payment" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-xl transition-all">
-                    Cancel
-                </button>
-                <button id="confirm-payment" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl transition-all">
-                    Record Payment
-                </button>
-            </div>
+        <div><label for="amount" class="block text-sm font-medium text-gray-300 mb-1">Amount (₹)</label> <input type="number" id="amount" required min="0" step="0.01" class="form-input w-full px-4 py-2" placeholder="0.00">
         </div>
-    </div>
-
-    <!-- Payment Method Modal -->
-    <div id="payment-method-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 hidden">
-        <div class="bg-gray-800 rounded-2xl p-6 max-w-md w-full mx-4 border border-gray-700 modal-enter">
-            <h3 class="text-xl font-semibold text-gray-100 mb-4">Select Payment Method</h3>
-            <div class="mb-4">
-                <p class="text-gray-300 mb-2">Person: <span id="method-person-name" class="font-medium text-white"></span></p>
-                <p class="text-gray-300 mb-4">Amount: <span id="method-amount" class="font-medium text-green-400"></span></p>
-            </div>
-            <div class="mb-6">
-                <label for="settlement-method" class="block text-sm font-medium text-gray-300 mb-2">How did they pay?</label>
-                <select id="settlement-method" class="form-input w-full px-4 py-2">
-                    <option value="online">Online</option>
-                    <option value="cash">Cash</option>
-                </select>
-            </div>
-            <div class="flex justify-end space-x-3">
-                <button id="cancel-method" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-xl transition-all">
-                    Cancel
-                </button>
-                <button id="confirm-method" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl transition-all">
-                    Record Payment
-                </button>
-            </div>
+        <div><label for="category" class="block text-sm font-medium text-gray-300 mb-1">Category</label> <select id="category" required class="form-input w-full px-4 py-2"> <option value="" disabled selected>Select a category</option> <option value="income">Income</option> <option value="food">Food &amp; Dining</option> <option value="transport">Transportation</option> <option value="shopping">Shopping</option> <option value="entertainment">Entertainment</option> <option value="bills">Bills &amp; Utilities</option> <option value="health">Healthcare</option> <option value="education">Education</option> <option value="travel">Travel</option> <option value="other">Other</option> </select>
         </div>
+        <div><label for="date" class="block text-sm font-medium text-gray-300 mb-1">Date</label> <input type="date" id="date" required class="form-input w-full px-4 py-2">
+        </div>
+        <div><label for="payment-method" class="block text-sm font-medium text-gray-300 mb-1">Payment Method</label> <select id="payment-method" required class="form-input w-full px-4 py-2"> <option value="online">Online</option> <option value="cash">Cash</option> <option value="savings">Savings Account</option> </select>
+        </div>
+        <div><label for="notes" class="block text-sm font-medium text-gray-300 mb-1">Notes (Optional)</label> <textarea id="notes" rows="2" class="form-input w-full px-4 py-2" placeholder="Add any additional details..."></textarea>
+        </div><!-- Split expense checkbox -->
+        <div class="flex items-center"><input type="checkbox" id="is-split" class="rounded bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500 h-4 w-4"> <label for="is-split" class="ml-2 text-sm text-gray-300">This is a split expense</label>
+        </div><!-- Split expense details (hidden by default) -->
+        <div id="split-details" class="hidden space-y-3 p-3 bg-gray-800 rounded-lg">
+         <div><label class="block text-sm font-medium text-gray-300 mb-1">Split with</label>
+          <div id="split-people" class="space-y-2">
+           <div class="flex items-center space-x-2"><input type="text" placeholder="Person name" class="form-input flex-grow px-3 py-1.5 text-sm"> <input type="number" placeholder="Amount ₹" class="form-input w-24 px-3 py-1.5 text-sm"> <button type="button" class="remove-person text-red-400 hover:text-red-300">
+             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18" /> <line x1="6" y1="6" x2="18" y2="18" />
+             </svg></button>
+           </div>
+          </div><button type="button" id="add-person" class="mt-2 text-sm text-indigo-400 hover:text-indigo-300 flex items-center">
+           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1"><line x1="12" y1="5" x2="12" y2="19" /> <line x1="5" y1="12" x2="19" y2="12" />
+           </svg> Add Person </button>
+         </div>
+        </div><button type="submit" class="w-full btn-gradient text-white font-medium py-2.5 px-4 rounded-xl shadow-md hover:shadow-lg transition-all"> Add Transaction </button>
+       </form>
+      </div>
+     </div><!-- Recent Transactions -->
+     <div class="lg:col-span-2">
+      <div class="card shadow-lg p-6 h-full">
+       <div class="flex justify-between items-center mb-6">
+        <h2 class="text-xl font-semibold text-gray-100">Recent Transactions</h2><a href="#" id="view-all-transactions" class="text-indigo-400 hover:text-indigo-300 text-sm font-medium">View All</a>
+       </div>
+       <div id="recent-transactions" class="space-y-3 max-h-[400px] overflow-y-auto pr-2">
+        <div class="text-center py-8 text-gray-400">
+         No transactions yet. Add your first one!
+        </div>
+       </div>
+      </div>
+     </div>
     </div>
-
-    <script>
+   </div><!-- Transactions Section -->
+   <div id="transactions-section" class="content-section">
+    <div class="card shadow-lg p-6 mb-8">
+     <div class="flex flex-col md:flex-row justify-between items-center mb-6">
+      <h2 class="text-2xl font-semibold text-gray-100 mb-4 md:mb-0">All Transactions</h2>
+      <div class="flex flex-wrap gap-2"><select id="filter-category" class="form-input px-3 py-1.5 text-sm"> <option value="all">All Categories</option> <option value="income">Income</option> <option value="food">Food &amp; Dining</option> <option value="transport">Transportation</option> <option value="shopping">Shopping</option> <option value="entertainment">Entertainment</option> <option value="bills">Bills &amp; Utilities</option> <option value="health">Healthcare</option> <option value="education">Education</option> <option value="travel">Travel</option> <option value="other">Other</option> </select> <select id="filter-month" class="form-input px-3 py-1.5 text-sm"> <option value="all">All Time</option> <option value="current">Current Month</option> <option value="last">Last Month</option> <option value="last3">Last 3 Months</option> <option value="last6">Last 6 Months</option> </select> <select id="filter-split" class="form-input px-3 py-1.5 text-sm"> <option value="all">All Transactions</option> <option value="split">Split Expenses Only</option> <option value="regular">Regular Expenses Only</option> </select> <select id="filter-payment" class="form-input px-3 py-1.5 text-sm"> <option value="all">All Payment Methods</option> <option value="cash">Cash Only</option> <option value="online">Online Only</option> <option value="savings">Savings Only</option> </select> <button id="clear-all" class="px-3 py-1.5 text-sm bg-red-600 text-white hover:bg-red-700 rounded-xl transition-all"> Clear All </button>
+      </div>
+     </div>
+     <div id="transaction-list" class="space-y-3 max-h-[500px] overflow-y-auto pr-2">
+      <div class="text-center py-8 text-gray-400">
+       No transactions yet. Add your first one!
+      </div>
+     </div>
+    </div>
+   </div><!-- Split Expenses Section -->
+   <div id="split-section" class="content-section">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8"><!-- Split Expenses Summary -->
+     <div class="card shadow-lg p-6">
+      <h2 class="text-xl font-semibold text-gray-100 mb-6">Split Expenses Summary</h2>
+      <div id="split-summary" class="space-y-4">
+       <div class="text-center py-8 text-gray-400">
+        No split expenses yet. Add your first one!
+       </div>
+      </div>
+     </div><!-- People You Split With -->
+     <div class="card shadow-lg p-6">
+      <h2 class="text-xl font-semibold text-gray-100 mb-6">People You Split With</h2>
+      <div id="split-people-list" class="space-y-4">
+       <div class="text-center py-8 text-gray-400">
+        No people added yet. Add a split expense to get started.
+       </div>
+      </div>
+     </div>
+    </div>
+    <div class="card shadow-lg p-6 mt-8">
+     <h2 class="text-xl font-semibold text-gray-100 mb-6">Split Expense History</h2>
+     <div id="split-history" class="space-y-3 max-h-[400px] overflow-y-auto pr-2">
+      <div class="text-center py-8 text-gray-400">
+       No split expenses yet. Add your first one!
+      </div>
+     </div>
+    </div>
+   </div><!-- Analytics Section -->
+   <div id="analytics-section" class="content-section">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8"><!-- Income vs Expenses Chart -->
+     <div class="card shadow-lg p-6">
+      <h2 class="text-xl font-semibold text-gray-100 mb-4">Income vs Expenses</h2>
+      <div class="chart-container">
+       <canvas id="income-expense-chart"></canvas>
+      </div>
+     </div><!-- Category Breakdown Chart -->
+     <div class="card shadow-lg p-6">
+      <h2 class="text-xl font-semibold text-gray-100 mb-4">Expense Breakdown</h2>
+      <div class="chart-container">
+       <canvas id="category-chart"></canvas>
+      </div>
+     </div>
+    </div>
+    <div class="card shadow-lg p-6">
+     <h2 class="text-xl font-semibold text-gray-100 mb-4">Monthly Trend</h2>
+     <div class="chart-container" style="height: 350px;">
+      <canvas id="trend-chart"></canvas>
+     </div>
+    </div>
+   </div>
+  </div><!-- Delete Confirmation Modal -->
+  <div id="delete-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 hidden">
+   <div class="bg-gray-800 rounded-2xl p-6 max-w-md w-full mx-4 border border-gray-700 modal-enter">
+    <h3 class="text-xl font-semibold text-gray-100 mb-4">Delete Transaction</h3>
+    <p class="text-gray-300 mb-6">Are you sure you want to delete this transaction? This action cannot be undone.</p>
+    <div class="flex justify-end space-x-3"><button id="cancel-delete" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-xl transition-all"> Cancel </button> <button id="confirm-delete" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl transition-all"> Delete </button>
+    </div>
+   </div>
+  </div><!-- Partial Payment Modal -->
+  <div id="partial-payment-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 hidden">
+   <div class="bg-gray-800 rounded-2xl p-6 max-w-md w-full mx-4 border border-gray-700 modal-enter">
+    <h3 class="text-xl font-semibold text-gray-100 mb-4">Record Partial Payment</h3>
+    <div class="mb-4">
+     <p class="text-gray-300 mb-2">Person: <span id="payment-person-name" class="font-medium text-white"></span></p>
+     <p class="text-gray-300 mb-4">Total Owed: <span id="payment-total-owed" class="font-medium text-green-400"></span></p>
+    </div>
+    <div class="mb-4"><label for="payment-amount" class="block text-sm font-medium text-gray-300 mb-2">Payment Amount (₹)</label> <input type="number" id="payment-amount" min="0" step="0.01" class="form-input w-full px-4 py-2" placeholder="0.00">
+     <p class="text-xs text-gray-400 mt-1">Enter the amount they're paying now</p>
+    </div>
+    <div class="mb-6"><label for="repayment-method" class="block text-sm font-medium text-gray-300 mb-2">Payment Method</label> <select id="repayment-method" class="form-input w-full px-4 py-2"> <option value="online">Online</option> <option value="cash">Cash</option> <option value="savings">Savings Account</option> </select>
+    </div>
+    <div class="flex justify-end space-x-3"><button id="cancel-payment" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-xl transition-all"> Cancel </button> <button id="confirm-payment" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl transition-all"> Record Payment </button>
+    </div>
+   </div>
+  </div><!-- Payment Method Modal -->
+  <div id="payment-method-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 hidden">
+   <div class="bg-gray-800 rounded-2xl p-6 max-w-md w-full mx-4 border border-gray-700 modal-enter">
+    <h3 class="text-xl font-semibold text-gray-100 mb-4">Select Payment Method</h3>
+    <div class="mb-4">
+     <p class="text-gray-300 mb-2">Person: <span id="method-person-name" class="font-medium text-white"></span></p>
+     <p class="text-gray-300 mb-4">Amount: <span id="method-amount" class="font-medium text-green-400"></span></p>
+    </div>
+    <div class="mb-6"><label for="settlement-method" class="block text-sm font-medium text-gray-300 mb-2">How did they pay?</label> <select id="settlement-method" class="form-input w-full px-4 py-2"> <option value="online">Online</option> <option value="cash">Cash</option> <option value="savings">Savings Account</option> </select>
+    </div>
+    <div class="flex justify-end space-x-3"><button id="cancel-method" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-xl transition-all"> Cancel </button> <button id="confirm-method" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl transition-all"> Record Payment </button>
+    </div>
+   </div>
+  </div>
+  <script>
         document.addEventListener('DOMContentLoaded', function() {
             // DOM Elements
             const dashboardTab = document.getElementById('dashboard-tab');
@@ -517,6 +386,7 @@
             initializeDateSelectors();
             updateSummary();
             updateCustomDateAnalysis();
+            updateTransferAmounts();
             renderRecentTransactions();
             renderTransactions();
             renderSplitExpenses();
@@ -747,6 +617,7 @@
             document.getElementById('filter-category').addEventListener('change', renderTransactions);
             document.getElementById('filter-month').addEventListener('change', renderTransactions);
             document.getElementById('filter-split').addEventListener('change', renderTransactions);
+            document.getElementById('filter-payment').addEventListener('change', renderTransactions);
             document.getElementById('clear-all').addEventListener('click', clearAllTransactions);
             document.getElementById('cancel-delete').addEventListener('click', closeDeleteModal);
             document.getElementById('confirm-delete').addEventListener('click', confirmDelete);
@@ -756,6 +627,11 @@
             document.getElementById('confirm-method').addEventListener('click', confirmPaymentMethod);
 
             document.getElementById('analysis-date').addEventListener('change', updateCustomDateAnalysis);
+            
+            // Transfer money event listeners
+            document.getElementById('transfer-cash-btn').addEventListener('click', transferCashToSavings);
+            document.getElementById('transfer-online-btn').addEventListener('click', transferOnlineToSavings);
+            document.getElementById('save-all-btn').addEventListener('click', saveAllToSavings);
             
             // Split expense toggle
             document.getElementById('is-split').addEventListener('change', function() {
@@ -868,6 +744,7 @@
                 saveSplitData();
                 updateSummary();
                 updateCustomDateAnalysis();
+                updateTransferAmounts();
                 renderRecentTransactions();
                 renderTransactions();
                 renderSplitExpenses();
@@ -972,6 +849,7 @@
                     
                     updateSummary();
                     updateCustomDateAnalysis();
+                    updateTransferAmounts();
                     renderRecentTransactions();
                     renderTransactions();
                     renderSplitExpenses();
@@ -1033,6 +911,7 @@
                 // Refresh UI and charts
                 updateSummary();
                 updateCustomDateAnalysis();
+                updateTransferAmounts();
                 renderRecentTransactions();
                 renderTransactions();
                 renderSplitExpenses();
@@ -1086,6 +965,7 @@
                 // Refresh UI and charts
                 updateSummary();
                 updateCustomDateAnalysis();
+                updateTransferAmounts();
                 renderRecentTransactions();
                 renderTransactions();
                 renderSplitExpenses();
@@ -1110,6 +990,7 @@
                 // Refresh UI
                 updateSummary();
                 updateCustomDateAnalysis();
+                updateTransferAmounts();
                 renderRecentTransactions();
                 renderTransactions();
                 renderSplitExpenses();
@@ -1136,7 +1017,7 @@
             
             function updateSummary() {
                 const income = transactions
-                    .filter(transaction => transaction.type === 'income' && !transaction.isSplitRepayment)
+                    .filter(transaction => transaction.type === 'income' && !transaction.isSplitRepayment && transaction.paymentMethod !== 'savings')
                     .reduce((total, transaction) => total + transaction.amount, 0);
                 
                 const totalExpenses = transactions
@@ -1169,14 +1050,322 @@
                 
                 const onlineBalance = onlineIncome - onlineExpenses;
                 
+                // Calculate savings account balance
+                const savingsIncome = transactions
+                    .filter(transaction => transaction.type === 'income' && transaction.paymentMethod === 'savings')
+                    .reduce((total, transaction) => total + transaction.amount, 0);
+                
+                const savingsExpenses = transactions
+                    .filter(transaction => transaction.type === 'expense' && transaction.paymentMethod === 'savings')
+                    .reduce((total, transaction) => total + transaction.amount, 0);
+                
+                const savingsBalance = savingsIncome - savingsExpenses;
+                
                 const netExpenses = totalExpenses - splitRepayments;
-                const balance = income - netExpenses;
+                // Current balance should only include cash and online, not savings
+                const balance = cashInHand + onlineBalance;
                 
                 document.getElementById('balance').textContent = formatCurrency(balance);
                 document.getElementById('cash-in-hand').textContent = formatCurrency(cashInHand);
                 document.getElementById('online-balance').textContent = formatCurrency(onlineBalance);
+                document.getElementById('transfer-savings-balance').textContent = formatCurrency(savingsBalance);
                 document.getElementById('income').textContent = formatCurrency(income);
                 document.getElementById('expense').textContent = formatCurrency(netExpenses);
+            }
+
+            function updateTransferAmounts() {
+                // Calculate available cash (positive balance only)
+                const cashIncome = transactions
+                    .filter(transaction => transaction.type === 'income' && transaction.paymentMethod === 'cash')
+                    .reduce((total, transaction) => total + transaction.amount, 0);
+                
+                const cashExpenses = transactions
+                    .filter(transaction => transaction.type === 'expense' && transaction.paymentMethod === 'cash')
+                    .reduce((total, transaction) => total + transaction.amount, 0);
+                
+                const availableCash = Math.max(0, cashIncome - cashExpenses);
+                
+                // Calculate available online balance (positive balance only)
+                const onlineIncome = transactions
+                    .filter(transaction => transaction.type === 'income' && transaction.paymentMethod === 'online')
+                    .reduce((total, transaction) => total + transaction.amount, 0);
+                
+                const onlineExpenses = transactions
+                    .filter(transaction => transaction.type === 'expense' && transaction.paymentMethod === 'online')
+                    .reduce((total, transaction) => total + transaction.amount, 0);
+                
+                const availableOnline = Math.max(0, onlineIncome - onlineExpenses);
+                
+                // Calculate current savings balance
+                const savingsIncome = transactions
+                    .filter(transaction => transaction.type === 'income' && transaction.paymentMethod === 'savings')
+                    .reduce((total, transaction) => total + transaction.amount, 0);
+                
+                const savingsExpenses = transactions
+                    .filter(transaction => transaction.type === 'expense' && transaction.paymentMethod === 'savings')
+                    .reduce((total, transaction) => total + transaction.amount, 0);
+                
+                const savingsBalance = savingsIncome - savingsExpenses;
+                
+                const totalAvailable = availableCash + availableOnline;
+                
+                // Update UI
+                document.getElementById('available-cash').textContent = formatCurrency(availableCash);
+                document.getElementById('available-online').textContent = formatCurrency(availableOnline);
+                document.getElementById('total-available').textContent = formatCurrency(totalAvailable);
+                document.getElementById('transfer-savings-balance').textContent = formatCurrency(savingsBalance);
+                
+                // Update max values for inputs
+                document.getElementById('cash-transfer-amount').max = availableCash;
+                document.getElementById('online-transfer-amount').max = availableOnline;
+                
+                // Disable buttons if no money available
+                document.getElementById('transfer-cash-btn').disabled = availableCash <= 0;
+                document.getElementById('transfer-online-btn').disabled = availableOnline <= 0;
+                document.getElementById('save-all-btn').disabled = totalAvailable <= 0;
+                
+                // Update button styles based on availability
+                const cashBtn = document.getElementById('transfer-cash-btn');
+                const onlineBtn = document.getElementById('transfer-online-btn');
+                const saveAllBtn = document.getElementById('save-all-btn');
+                
+                if (availableCash <= 0) {
+                    cashBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                    cashBtn.classList.remove('hover:bg-green-700');
+                } else {
+                    cashBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    cashBtn.classList.add('hover:bg-green-700');
+                }
+                
+                if (availableOnline <= 0) {
+                    onlineBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                    onlineBtn.classList.remove('hover:bg-cyan-700');
+                } else {
+                    onlineBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    onlineBtn.classList.add('hover:bg-cyan-700');
+                }
+                
+                if (totalAvailable <= 0) {
+                    saveAllBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                    saveAllBtn.classList.remove('hover:bg-amber-700');
+                } else {
+                    saveAllBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    saveAllBtn.classList.add('hover:bg-amber-700');
+                }
+            }
+            
+            function transferCashToSavings() {
+                const amount = parseFloat(document.getElementById('cash-transfer-amount').value);
+                if (!amount || amount <= 0) {
+                    alert('Please enter a valid amount to transfer.');
+                    return;
+                }
+                
+                const availableCash = parseFloat(document.getElementById('available-cash').textContent.replace('₹', '').replace(',', ''));
+                if (amount > availableCash) {
+                    alert('Transfer amount cannot be more than available cash.');
+                    return;
+                }
+                
+                // Create two transactions: expense from cash and income to savings
+                const today = new Date().toISOString().split('T')[0];
+                
+                // Expense transaction (money leaving cash)
+                const expenseTransaction = {
+                    id: Date.now(),
+                    title: 'Transfer to Savings Account',
+                    amount: amount,
+                    category: 'other',
+                    date: today,
+                    paymentMethod: 'cash',
+                    notes: 'Money transferred to savings account',
+                    type: 'expense',
+                    isSplit: false,
+                    splitWith: [],
+                    isTransfer: true
+                };
+                
+                // Income transaction (money entering savings)
+                const incomeTransaction = {
+                    id: Date.now() + 1,
+                    title: 'Transfer from Cash',
+                    amount: amount,
+                    category: 'income',
+                    date: today,
+                    paymentMethod: 'savings',
+                    notes: 'Money transferred from cash',
+                    type: 'income',
+                    isSplit: false,
+                    splitWith: [],
+                    isTransfer: true
+                };
+                
+                transactions.push(expenseTransaction, incomeTransaction);
+                saveTransactions();
+                
+                updateSummary();
+                updateCustomDateAnalysis();
+                updateTransferAmounts();
+                renderRecentTransactions();
+                renderTransactions();
+                updateCharts();
+                
+                // Clear input and show success message
+                document.getElementById('cash-transfer-amount').value = '';
+                alert(`Successfully transferred ${formatCurrency(amount)} from cash to savings account!`);
+            }
+            
+            function transferOnlineToSavings() {
+                const amount = parseFloat(document.getElementById('online-transfer-amount').value);
+                if (!amount || amount <= 0) {
+                    alert('Please enter a valid amount to transfer.');
+                    return;
+                }
+                
+                const availableOnline = parseFloat(document.getElementById('available-online').textContent.replace('₹', '').replace(',', ''));
+                if (amount > availableOnline) {
+                    alert('Transfer amount cannot be more than available online balance.');
+                    return;
+                }
+                
+                // Create two transactions: expense from online and income to savings
+                const today = new Date().toISOString().split('T')[0];
+                
+                // Expense transaction (money leaving online)
+                const expenseTransaction = {
+                    id: Date.now(),
+                    title: 'Transfer to Savings Account',
+                    amount: amount,
+                    category: 'other',
+                    date: today,
+                    paymentMethod: 'online',
+                    notes: 'Money transferred to savings account',
+                    type: 'expense',
+                    isSplit: false,
+                    splitWith: [],
+                    isTransfer: true
+                };
+                
+                // Income transaction (money entering savings)
+                const incomeTransaction = {
+                    id: Date.now() + 1,
+                    title: 'Transfer from Online',
+                    amount: amount,
+                    category: 'income',
+                    date: today,
+                    paymentMethod: 'savings',
+                    notes: 'Money transferred from online account',
+                    type: 'income',
+                    isSplit: false,
+                    splitWith: [],
+                    isTransfer: true
+                };
+                
+                transactions.push(expenseTransaction, incomeTransaction);
+                saveTransactions();
+                
+                updateSummary();
+                updateCustomDateAnalysis();
+                updateTransferAmounts();
+                renderRecentTransactions();
+                renderTransactions();
+                updateCharts();
+                
+                // Clear input and show success message
+                document.getElementById('online-transfer-amount').value = '';
+                alert(`Successfully transferred ${formatCurrency(amount)} from online to savings account!`);
+            }
+            
+            function saveAllToSavings() {
+                const availableCash = parseFloat(document.getElementById('available-cash').textContent.replace('₹', '').replace(',', ''));
+                const availableOnline = parseFloat(document.getElementById('available-online').textContent.replace('₹', '').replace(',', ''));
+                const totalAmount = availableCash + availableOnline;
+                
+                if (totalAmount <= 0) {
+                    alert('No money available to transfer.');
+                    return;
+                }
+                
+                if (!confirm(`Transfer all available money (${formatCurrency(totalAmount)}) to savings account?`)) {
+                    return;
+                }
+                
+                const today = new Date().toISOString().split('T')[0];
+                const newTransactions = [];
+                
+                // Transfer cash if available
+                if (availableCash > 0) {
+                    newTransactions.push({
+                        id: Date.now(),
+                        title: 'Transfer to Savings Account',
+                        amount: availableCash,
+                        category: 'other',
+                        date: today,
+                        paymentMethod: 'cash',
+                        notes: 'All cash transferred to savings account',
+                        type: 'expense',
+                        isSplit: false,
+                        splitWith: [],
+                        isTransfer: true
+                    });
+                    
+                    newTransactions.push({
+                        id: Date.now() + 1,
+                        title: 'Transfer from Cash',
+                        amount: availableCash,
+                        category: 'income',
+                        date: today,
+                        paymentMethod: 'savings',
+                        notes: 'All cash transferred to savings',
+                        type: 'income',
+                        isSplit: false,
+                        splitWith: [],
+                        isTransfer: true
+                    });
+                }
+                
+                // Transfer online if available
+                if (availableOnline > 0) {
+                    newTransactions.push({
+                        id: Date.now() + 2,
+                        title: 'Transfer to Savings Account',
+                        amount: availableOnline,
+                        category: 'other',
+                        date: today,
+                        paymentMethod: 'online',
+                        notes: 'All online money transferred to savings account',
+                        type: 'expense',
+                        isSplit: false,
+                        splitWith: [],
+                        isTransfer: true
+                    });
+                    
+                    newTransactions.push({
+                        id: Date.now() + 3,
+                        title: 'Transfer from Online',
+                        amount: availableOnline,
+                        category: 'income',
+                        date: today,
+                        paymentMethod: 'savings',
+                        notes: 'All online money transferred to savings',
+                        type: 'income',
+                        isSplit: false,
+                        splitWith: [],
+                        isTransfer: true
+                    });
+                }
+                
+                transactions.push(...newTransactions);
+                saveTransactions();
+                
+                updateSummary();
+                updateCustomDateAnalysis();
+                updateTransferAmounts();
+                renderRecentTransactions();
+                renderTransactions();
+                updateCharts();
+                
+                alert(`Successfully transferred ${formatCurrency(totalAmount)} to savings account!`);
             }
 
             function updateCustomDateAnalysis() {
@@ -1297,6 +1486,8 @@
                     let paymentBadge = '';
                     if (transaction.paymentMethod === 'cash') {
                         paymentBadge = `<span class="ml-2 text-xs px-2 py-0.5 rounded-full bg-green-900 text-green-300">Cash</span>`;
+                    } else if (transaction.paymentMethod === 'savings') {
+                        paymentBadge = `<span class="ml-2 text-xs px-2 py-0.5 rounded-full bg-amber-900 text-amber-300">Savings</span>`;
                     }
                     
                     transactionEl.innerHTML = `
@@ -1328,6 +1519,7 @@
                 const filterCategory = document.getElementById('filter-category').value;
                 const filterMonth = document.getElementById('filter-month').value;
                 const filterSplit = document.getElementById('filter-split').value;
+                const filterPayment = document.getElementById('filter-payment').value;
                 
                 // Filter transactions based on selected filters
                 let filteredTransactions = transactions;
@@ -1367,6 +1559,10 @@
                     }
                 }
                 
+                if (filterPayment !== 'all') {
+                    filteredTransactions = filteredTransactions.filter(t => t.paymentMethod === filterPayment);
+                }
+                
                 // Sort transactions by date (newest first)
                 filteredTransactions.sort((a, b) => new Date(b.date) - new Date(a.date));
                 
@@ -1395,6 +1591,8 @@
                     let paymentBadge = '';
                     if (transaction.paymentMethod === 'cash') {
                         paymentBadge = `<span class="ml-2 text-xs px-2 py-0.5 rounded-full bg-green-900 text-green-300">Cash</span>`;
+                    } else if (transaction.paymentMethod === 'savings') {
+                        paymentBadge = `<span class="ml-2 text-xs px-2 py-0.5 rounded-full bg-amber-900 text-amber-300">Savings</span>`;
                     }
                     
                     if (transaction.isSplit && transaction.splitWith && transaction.splitWith.length > 0) {
@@ -1468,7 +1666,7 @@
                     `;
                 } else {
                     splitSummary.innerHTML = `
-                        <p class="text-gray-300 mb-4">Total amount split with others: ${formatCurrency(splitExpenses.reduce((sum, exp) => sum + exp.amount, 0))}. Click “Mark as paid” when someone settles their part.</p>
+                        <p class="text-gray-300 mb-4">Total amount split with others: ${formatCurrency(splitExpenses.reduce((sum, exp) => sum + exp.amount, 0))}. Click "Mark as paid" when someone settles their part.</p>
                         <div class="space-y-3">
                             ${splitPeople.filter(p => p.totalOwed > 0).map(person => `
                                 <div class="bg-gray-800 border border-gray-700 rounded-xl p-3 flex justify-between items-center">
@@ -1715,7 +1913,7 @@
                 
                 // Income vs Expense Chart
                 const totalIncome = transactions
-                    .filter(transaction => transaction.type === 'income' && !transaction.isSplitRepayment)
+                    .filter(transaction => transaction.type === 'income' && !transaction.isSplitRepayment && transaction.paymentMethod !== 'savings')
                     .reduce((total, transaction) => total + transaction.amount, 0);
                 
                 const totalExpenses = transactions
@@ -1785,7 +1983,7 @@
                     const monthKey = `${date.getFullYear()}-${date.getMonth() + 1}`;
                     
                     if (monthlyData[monthKey]) {
-                        if (transaction.type === 'income' && !transaction.isSplitRepayment) {
+                        if (transaction.type === 'income' && !transaction.isSplitRepayment && transaction.paymentMethod !== 'savings') {
                             monthlyData[monthKey].income += transaction.amount;
                         } else if (transaction.type === 'expense') {
                             monthlyData[monthKey].expense += transaction.amount;
@@ -1881,5 +2079,5 @@
             }
         });
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'981ff34726c53ae6',t:'MTc1ODM1NjkxNi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9a37e588a5518569',t:'MTc2Mzk3NjcyMS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
